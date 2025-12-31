@@ -16,7 +16,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-md-3 col-6">
         <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white;">
             <div class="card-body">
@@ -26,7 +25,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-md-3 col-6">
         <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white;">
             <div class="card-body">
@@ -36,7 +34,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-md-3 col-6">
         <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%); color: white;">
             <div class="card-body">
@@ -50,22 +47,31 @@
 
 <h5 class="fw-bold mb-3">🚀 Hızlı İşlemler</h5>
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <a href="{% url 'yoklama_al' %}" class="btn btn-dark w-100 py-3 shadow-sm d-flex align-items-center justify-content-center">
+    <div class="col-md-3">
+        <a href="{% url 'yoklama_al' %}" class="btn btn-dark w-100 py-3 shadow-sm d-flex align-items-center justify-content-center text-decoration-none">
             <span class="fs-4 me-2">📝</span> 
-            <span class="fw-bold">Yoklama Al</span>
+            <div class="text-start lh-1">
+                <span class="d-block fw-bold">Yoklama Al</span>
+                <small class="opacity-75" style="font-size: 0.7rem;">{{ bugun|date:"d M" }}</small>
+            </div>
         </a>
     </div>
-    <div class="col-md-4">
-        <a href="{% url 'maas_raporu' %}" class="btn btn-white bg-white w-100 py-3 shadow-sm border d-flex align-items-center justify-content-center text-dark">
+    <div class="col-md-3">
+        <a href="{% url 'maas_raporu' %}" class="btn btn-white bg-white w-100 py-3 shadow-sm border d-flex align-items-center justify-content-center text-dark text-decoration-none">
             <span class="fs-4 me-2">💰</span> 
             <span class="fw-bold">Maaş Raporu</span>
         </a>
     </div>
-    <div class="col-md-4">
-        <a href="{% url 'personel_listesi' %}" class="btn btn-white bg-white w-100 py-3 shadow-sm border d-flex align-items-center justify-content-center text-dark">
+    <div class="col-md-3">
+        <a href="{% url 'giris_cikis_raporu' %}" class="btn btn-white bg-white w-100 py-3 shadow-sm border d-flex align-items-center justify-content-center text-dark text-decoration-none">
+            <span class="fs-4 me-2">📋</span> 
+            <span class="fw-bold">Giriş/Çıkışlar</span>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'personel_listesi' %}" class="btn btn-white bg-white w-100 py-3 shadow-sm border d-flex align-items-center justify-content-center text-dark text-decoration-none">
             <span class="fs-4 me-2">👥</span> 
-            <span class="fw-bold">Personel Listesi</span>
+            <span class="fw-bold">Personeller</span>
         </a>
     </div>
 </div>

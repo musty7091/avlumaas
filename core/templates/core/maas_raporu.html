@@ -9,19 +9,17 @@
     </div>
 </div>
 
-<form method="GET" class="card p-3 mb-4 bg-light shadow-sm">
-    <div class="row g-2 align-items-center">
-        <div class="col-auto"><label class="fw-bold">Dönem Seç:</label></div>
-        <div class="col-auto">
-            <input type="number" name="ay" class="form-control" value="{{ ay }}" min="1" max="12" style="width: 70px;">
-        </div>
-        <div class="col-auto">
-            <input type="number" name="yil" class="form-control" value="{{ yil }}" style="width: 100px;">
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-primary">Hesapla</button>
-        </div>
+<form method="GET" class="card p-3 mb-4 bg-light shadow-sm d-flex flex-row align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-2">
+        <label class="fw-bold">Dönem Seç:</label>
+        <input type="number" name="ay" class="form-control" value="{{ ay }}" min="1" max="12" style="width: 70px;">
+        <input type="number" name="yil" class="form-control" value="{{ yil }}" style="width: 100px;">
+        <button type="submit" class="btn btn-primary">Hesapla</button>
     </div>
+    
+    <a href="{% url 'maas_raporu_indir' %}?ay={{ ay }}&yil={{ yil }}" class="btn btn-success fw-bold">
+        📊 Excel Olarak İndir
+    </a>
 </form>
 
 <div class="table-responsive">
@@ -36,7 +34,7 @@
                 <th class="text-primary">Primler</th>
                 <th class="text-danger">Kesintiler</th>
                 <th class="bg-success text-white">NET ÖDENECEK</th>
-            </tr>
+                <th>İşlem</th> </tr>
         </thead>
         <tbody>
             {% for satir in rapor_listesi %}
@@ -52,23 +50,17 @@
                         <small class="text-danger">({{ satir.gelmedigi_gun }} gün kesildi)</small>
                     {% endif %}
                 </td>
+                <td>{{ satir.ana_hakedis|stringformat:".2f" }} TL</td>
+                <td>{{ satir.toplam_mesai }} Saat</td>
+                <td>+{{ satir.mesai_ucreti|stringformat:".2f" }} TL</td>
+                <td class="text-primary fw-bold">+{{ satir.toplam_prim|stringformat:".2f" }} TL</td>
+                <td class="text-danger fw-bold">-{{ satir.toplam_kesinti|stringformat:".2f" }} TL</td>
+                <td class="fw-bold fs-5 text-success bg-light">{{ satir.net_maas|stringformat:".2f" }} TL</td>
+                
                 <td>
-                    {{ satir.ana_hakedis|stringformat:".2f" }} TL
-                </td>
-                <td>
-                    {{ satir.toplam_mesai }} Saat
-                </td>
-                <td>
-                    +{{ satir.mesai_ucreti|stringformat:".2f" }} TL
-                </td>
-                <td class="text-primary fw-bold">
-                    +{{ satir.toplam_prim|stringformat:".2f" }} TL
-                </td>
-                <td class="text-danger fw-bold">
-                    -{{ satir.toplam_kesinti|stringformat:".2f" }} TL
-                </td>
-                <td class="fw-bold fs-5 text-success bg-light">
-                    {{ satir.net_maas|stringformat:".2f" }} TL
+                    <a href="{% url 'personel_pusula' satir.personel.id %}?ay={{ ay }}&yil={{ yil }}" target="_blank" class="btn btn-outline-dark btn-sm">
+                        📄 Pusula
+                    </a>
                 </td>
             </tr>
             {% endfor %}

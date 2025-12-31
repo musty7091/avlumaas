@@ -93,31 +93,24 @@
 <div style="height: 50px;"></div>
 
 <script>
-    // 1. KUTU KİLİTLEME (Seçiniz durumunda gri yapar)
+    // 1. KUTU KİLİTLEME
     function toggleSaatler(selectElement) {
         const form = selectElement.closest('form');
         const inputs = form.querySelectorAll('.saat-input');
         
-        // Sadece 'Geldi' veya 'Hafta Tatili' seçilirse kutuları aç
         const aktif = (selectElement.value === 'geldi' || selectElement.value === 'hafta_tatili');
 
         inputs.forEach(input => {
             input.disabled = !aktif;
             input.style.backgroundColor = !aktif ? '#e9ecef' : '#fff';
             input.style.color = !aktif ? '#6c757d' : '#000';
-            
-            // Eğer pasif duruma geçerse ve içi boşsa, temiz kalmaya devam etsin
-            if (!aktif) {
-                // İsteğe bağlı: Pasife alınca içini temizlemek istersen:
-                // input.value = ''; 
-            }
         });
     }
 
-    // 2. OTOMATİK ':' KOYUCU (0830 -> 08:30)
+    // 2. OTOMATİK ':' KOYUCU
     function formatTimeInput(e) {
         let input = e.target;
-        let value = input.value.replace(/\D/g, ''); // Sadece rakam
+        let value = input.value.replace(/\D/g, ''); 
         
         if (value.length > 4) value = value.slice(0, 4);
 
@@ -129,13 +122,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Açılışta tüm kilitleri kontrol et
         const selects = document.querySelectorAll('select[name="durum"]');
         selects.forEach(select => {
             toggleSaatler(select);
         });
 
-        // Saat formatlayıcıyı bağla
         const saatInputs = document.querySelectorAll('.saat-input');
         saatInputs.forEach(input => {
             input.addEventListener('input', formatTimeInput);

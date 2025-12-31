@@ -1,0 +1,135 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-lg border-0 print-area">
+        <div class="card-header bg-dark text-white p-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h3 class="m-0 fw-bold">MAAŞ HESAP PUSULASI</h3>
+                <small class="opacity-75">Dönem: {{ ay_adi }} {{ yil }}</small>
+            </div>
+            <div class="text-end">
+                <h4 class="m-0">{{ personel.ad }} {{ personel.soyad }}</h4>
+                <small>{{ personel.get_calisma_tipi_display }}</small>
+            </div>
+        </div>
+        
+        <div class="card-body p-4">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr><th class="bg-light w-50">TC Kimlik No</th><td>{{ personel.tc_no }}</td></tr>
+                        <tr><th class="bg-light">Telefon</th><td>{{ personel.telefon }}</td></tr>
+                        <tr><th class="bg-light">Banka / IBAN</th><td>{{ personel.banka_adi }} / {{ personel.iban }}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr><th class="bg-light w-50">Maaş/Yevmiye</th><td>{{ personel.maas_tutari }} TL</td></tr>
+                        <tr><th class="bg-light">Çalışılan Gün</th><td>{{ calistigi_gun }} Gün</td></tr>
+                        <tr><th class="bg-light">Mesai Saati</th><td>{{ toplam_mesai }} Saat</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="text-success fw-bold border-bottom pb-2">➕ GELİRLER (Hakedişler)</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Ana Maaş Hakedişi:</span>
+                        <span class="fw-bold">{{ ana_hakedis|stringformat:".2f" }} TL</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Mesai Ücreti ({{ toplam_mesai }} Saat):</span>
+                        <span class="fw-bold">{{ mesai_ucreti|stringformat:".2f" }} TL</span>
+                    </div>
+                    
+                    {% if primler_listesi %}
+                    <div class="mt-3">
+                        <small class="fw-bold text-muted">Primler / Ekstralar:</small>
+                        <ul class="list-group list-group-flush small">
+                            {% for p in primler_listesi %}
+                            <li class="list-group-item d-flex justify-content-between px-0 py-1 border-0">
+                                <span>- {{ p.aciklama|default:"Prim" }} ({{ p.tarih|date:"d.m" }})</span>
+                                <span>{{ p.tutar }} TL</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between mt-3 pt-2 border-top">
+                        <span class="fw-bold text-success">TOPLAM GELİR:</span>
+                        <span class="fw-bold text-success">{{ ana_hakedis|add:mesai_ucreti|add:toplam_prim|stringformat:".2f" }} TL</span>
+                    </div>
+                </div>
+
+                <div class="col-md-6 border-start">
+                    <h5 class="text-danger fw-bold border-bottom pb-2">➖ GİDERLER (Kesintiler)</h5>
+                    
+                    {% if kesintiler_listesi or taksitler %}
+                        <ul class="list-group list-group-flush small mb-3">
+                            {% for k in kesintiler_listesi %}
+                            <li class="list-group-item d-flex justify-content-between px-0 py-1 border-0">
+                                <span>- {{ k.get_islem_tipi_display }} ({{ k.tarih|date:"d.m" }})</span>
+                                <span>{{ k.tutar }} TL</span>
+                            </li>
+                            {% endfor %}
+
+                            {% for t in taksitler %}
+                            <li class="list-group-item d-flex justify-content-between px-0 py-1 border-0 text-danger">
+                                <span>- Taksitli Avans Kesintisi</span>
+                                <span>{{ t.aylik_kesinti }} TL</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted small">Bu ay kesinti yok.</p>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between mt-3 pt-2 border-top">
+                        <span class="fw-bold text-danger">TOPLAM KESİNTİ:</span>
+                        <span class="fw-bold text-danger">-{{ toplam_kesinti|stringformat:".2f" }} TL</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-success mt-4 d-flex justify-content-between align-items-center">
+                <span class="fs-4 fw-bold">ÖDENECEK NET TUTAR:</span>
+                <span class="fs-3 fw-bold">{{ net_maas|stringformat:".2f" }} TL</span>
+            </div>
+            
+            <div class="row mt-5 text-center">
+                <div class="col-6">
+                    <p class="fw-bold">Teslim Eden</p>
+                    <br><br>
+                    <p>...................................</p>
+                </div>
+                <div class="col-6">
+                    <p class="fw-bold">Teslim Alan</p>
+                    <br><br>
+                    <p>...................................</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <div class="text-center my-4 no-print">
+        <button onclick="window.print()" class="btn btn-dark btn-lg shadow">🖨️ BU SAYFAYI YAZDIR</button>
+        <button onclick="window.close()" class="btn btn-outline-secondary btn-lg ms-2">Kapat</button>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body * { visibility: hidden; }
+        .print-area, .print-area * { visibility: visible; }
+        .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+        .no-print { display: none; }
+        .navbar, .mobile-bottom-nav { display: none !important; }
+    }
+</style>
+{% endblock %}

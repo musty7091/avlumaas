@@ -6,9 +6,9 @@
     <a href="{% url 'personel_detay' personel.id %}" class="btn btn-outline-secondary btn-sm">Geri Dön</a>
 </div>
 
-<form method="GET" class="card p-3 mb-3 bg-light">
+<form method="GET" class="card p-3 mb-3 bg-light shadow-sm border-0">
     <div class="row g-2 align-items-center">
-        <div class="col-auto"><label>Ay/Yıl Seç:</label></div>
+        <div class="col-auto"><label class="fw-bold">Dönem Seç:</label></div>
         <div class="col-auto">
             <input type="number" name="ay" class="form-control" value="{{ ay }}" min="1" max="12" style="width: 70px;">
         </div>
@@ -23,52 +23,68 @@
 
 <form method="POST">
     {% csrf_token %}
-    <div class="table-responsive">
-        <table class="table table-bordered table-hover align-middle">
+    <div class="table-responsive shadow-sm bg-white rounded">
+        <table class="table table-bordered table-hover align-middle mb-0">
             <thead class="table-dark">
                 <tr>
-                    <th style="width: 150px;">Tarih</th>
-                    <th style="width: 200px;">Durum</th>
-                    <th>Giriş (Örn: 08:00)</th>
-                    <th>Çıkış (Örn: 18:30)</th>
-                    <th>Mesai</th>
+                    <th style="min-width: 180px;">Tarih</th> 
+                    <th style="width: 160px;">Durum</th>
+                    <th>Giriş</th>
+                    <th>Çıkış</th>
+                    <th class="text-center" style="width: 140px;">Mesai / Durum</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in gunler_listesi %}
                 <tr>
-                    <td class="bg-light fw-bold">
-                        {{ item.tarih|date:"d M Y" }} <br>
-                        <small class="text-muted">{{ item.tarih|date:"l" }}</small>
+                    <td class="bg-light fw-bold text-nowrap">
+                        {{ item.tarih|date:"d M Y" }} 
+                        <span class="text-muted fw-normal ms-2">- {{ item.tarih|date:"l" }}</span>
                     </td>
+                    
                     <td>
                         <select name="durum_{{ item.tarih_str }}" class="form-select form-select-sm" onchange="toggleRow(this)">
                             <option value="" {% if not item.kayit %}selected{% endif %}>-- Seçiniz --</option>
                             <option value="geldi" {% if item.kayit.durum == 'geldi' %}selected{% endif %}>Geldi</option>
-                            <option value="hafta_tatili" {% if item.kayit.durum == 'hafta_tatili' %}selected{% endif %}>Hafta Tatili (Mesai)</option>
+                            <option value="hafta_tatili" {% if item.kayit.durum == 'hafta_tatili' %}selected{% endif %}>Hafta Tatili</option>
                             <option value="gelmedi" {% if item.kayit.durum == 'gelmedi' %}selected{% endif %}>Gelmedi</option>
                             <option value="izinli" {% if item.kayit.durum == 'izinli' %}selected{% endif %}>İzinli</option>
                             <option value="ucretsiz_izin" {% if item.kayit.durum == 'ucretsiz_izin' %}selected{% endif %}>Ücretsiz İzin</option>
                             <option value="raporlu" {% if item.kayit.durum == 'raporlu' %}selected{% endif %}>Raporlu</option>
                         </select>
                     </td>
+
                     <td>
                         <input type="text" name="giris_{{ item.tarih_str }}" 
                                class="form-control form-control-sm saat-input text-center"
-                               placeholder="08:00" maxlength="5"
+                               placeholder="" maxlength="5"
                                value="{% if item.kayit and item.kayit.giris_saati %}{{ item.kayit.giris_saati|date:'H:i' }}{% endif %}">
                     </td>
+                    
                     <td>
                         <input type="text" name="cikis_{{ item.tarih_str }}" 
                                class="form-control form-control-sm saat-input text-center"
-                               placeholder="18:00" maxlength="5"
+                               placeholder="" maxlength="5"
                                value="{% if item.kayit and item.kayit.cikis_saati %}{{ item.kayit.cikis_saati|date:'H:i' }}{% endif %}">
                     </td>
+
                     <td class="text-center">
-                        {% if item.kayit.hesaplanan_mesai_saati > 0 %}
-                            <span class="badge bg-success">+{{ item.kayit.hesaplanan_mesai_saati }}</span>
-                        {% elif item.kayit.hesaplanan_mesai_saati < 0 %}
-                            <span class="badge bg-danger">{{ item.kayit.hesaplanan_mesai_saati }}</span>
+                        {% if item.kayit %}
+                            <span class="badge rounded-pill
+                                {% if item.kayit.hesaplanan_mesai_saati > 0 %} bg-success 
+                                {% elif item.kayit.hesaplanan_mesai_saati < 0 %} bg-danger 
+                                {% else %} bg-secondary {% endif %}">
+                                
+                                {% if item.kayit.hesaplanan_mesai_saati > 0 %}
+                                    +{{ item.kayit.hesaplanan_mesai_saati }} Saat
+                                {% elif item.kayit.hesaplanan_mesai_saati < 0 %}
+                                    {{ item.kayit.hesaplanan_mesai_saati }} Eksik
+                                {% else %}
+                                    Tamam
+                                {% endif %}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-light text-muted border">Bekliyor</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -77,15 +93,16 @@
         </table>
     </div>
 
-    <div style="height: 120px;"></div>
-
-    <div class="fixed-bottom p-3 bg-white border-top text-center shadow-lg" style="bottom: 50px; z-index: 1000;">
-        <button type="submit" class="btn btn-success w-100 py-2 fw-bold">TÜM AYI KAYDET</button>
+    <div class="mt-4 mb-5 text-center">
+        <button type="submit" class="btn btn-success btn-lg w-100 fw-bold shadow">
+            💾 TÜM AYI KAYDET
+        </button>
     </div>
+    
+    <div style="height: 60px;"></div>
 </form>
 
 <script>
-// 1. Kutuları Aç/Kapa Mantığı
 function toggleRow(select) {
     const tr = select.closest('tr');
     const inputs = tr.querySelectorAll('input.saat-input');
@@ -99,15 +116,12 @@ function toggleRow(select) {
     });
 }
 
-// 2. OTOMATİK SAAT FORMATLAYICI (1430 Yazınca 14:30 Yapar)
 function formatTimeInput(e) {
     let input = e.target;
-    let value = input.value.replace(/\D/g, ''); // Sadece rakamları al
+    let value = input.value.replace(/\D/g, '');
     
-    // 4 karakterden fazla girilmesini engelle
     if (value.length > 4) value = value.slice(0, 4);
 
-    // İlk 2 rakamdan sonra otomatik ':' koy
     if (value.length > 2) {
         input.value = value.slice(0, 2) + ':' + value.slice(2);
     } else {
@@ -116,19 +130,11 @@ function formatTimeInput(e) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Sayfa açılışında kilitleri ayarla
     document.querySelectorAll('select').forEach(toggleRow);
 
-    // Saat inputlarına otomatik formatlayıcıyı ekle
     const saatInputs = document.querySelectorAll('.saat-input');
     saatInputs.forEach(input => {
         input.addEventListener('input', formatTimeInput);
-        
-        // Kutudan çıkarken basit doğrulama (Opsiyonel: 24 saati geçmesin diye uyarı eklenebilir ama hız için gerek yok)
-        input.addEventListener('blur', function() {
-            // Eğer tek hane girildiyse (örn: 8) -> 08:00 yapmaya çalışabiliriz veya kullanıcıya bırakırız.
-            // Şu an en hızlısı kullanıcı ne yazarsa odur.
-        });
     });
 });
 </script>

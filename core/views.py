@@ -329,3 +329,182 @@ def download_excel_template(request):
     response['Content-Disposition'] = 'attachment; filename="personel_sablon.xlsx"'
     
     return response
+
+# --- YENİ: TOPLU MAAŞ RAPORUNU EXCEL OLARAK İNDİRME ---
+def maas_raporu_indir(request):
+    bugun = timezone.now().date()
+    try:
+        yil = int(request.GET.get('yil', bugun.year))
+        ay = int(request.GET.get('ay', bugun.month))
+    except ValueError:
+        yil = bugun.year
+        ay = bugun.month
+
+    # Rapor verisini hazırla (maas_raporu fonksiyonundaki mantığın aynısı)
+    personeller = Personel.objects.filter(aktif_mi=True)
+    data = []
+
+    for p in personeller:
+        calistigi_gun = Puantaj.objects.filter(personel=p, tarih__year=yil, tarih__month=ay, durum__in=['geldi', 'hafta_tatili']).count()
+        gelmedigi_gun = Puantaj.objects.filter(personel=p, tarih__year=yil, tarih__month=ay, durum__in=['gelmedi', 'ucretsiz_izin']).count()
+        toplam_mesai = Puantaj.objects.filter(personel=p, tarih__year=yil, tarih__month=ay).aggregate(Sum('hesaplanan_mesai_saati'))['hesaplanan_mesai_saati__sum'] or 0
+        mesai_ucreti = float(toplam_mesai) * float(p.ozel_mesai_ucreti)
+
+        if p.calisma_tipi == 'aylik':
+            gunluk_maliyet = float(p.maas_tutari) / 30
+            maas_kesintisi = gunluk_maliyet * gelmedigi_gun
+            ana_hakedis = float(p.maas_tutari) - maas_kesintisi
+        else:
+            ana_hakedis = float(p.maas_tutari) * calistigi_gun
+
+        tum_hareketler = FinansalHareket.objects.filter(personel=p, tarih__year=yil, tarih__month=ay)
+        toplam_prim = tum_hareketler.filter(islem_tipi='prim').aggregate(Sum('tutar'))['tutar__sum'] or 0
+        diger_kesintiler = tum_hareketler.exclude(islem_tipi='prim').aggregate(Sum('tutar'))['tutar__sum'] or 0
+        taksit_kesintisi = TaksitliAvans.objects.filter(personel=p, tamamlandi=False).aggregate(Sum('aylik_kesinti'))['aylik_kesinti__sum'] or 0
+        toplam_kesinti = float(diger_kesintiler) + float(taksit_kesintisi)
+        net_maas = ana_hakedis + mesai_ucreti + float(toplam_prim) - toplam_kesinti
+
+        data.append({
+            'Ad Soyad': f"{p.ad} {p.soyad}",
+            'Çalışma Tipi': p.get_calisma_tipi_display(),
+            'Çalıştığı Gün': calistigi_gun,
+            'Gelmediği Gün': gelmedigi_gun,
+            'Ana Hakediş': ana_hakedis,
+            'Mesai Saati': toplam_mesai,
+            'Mesai Ücreti': mesai_ucreti,
+            'Primler': toplam_prim,
+            'Kesintiler': toplam_kesinti,
+            'NET ÖDENECEK': net_maas
+        })
+
+    # Pandas ile Excel oluştur
+    df = pd.DataFrame(data)
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name=f'{ay}-{yil} Maas Raporu')
+    
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="Maas_Raporu_{ay}_{yil}.xlsx"'
+    return response
+
+# --- YENİ: KİŞİYE ÖZEL MAAŞ PUSULASI / DETAY RAPOR ---
+def personel_pusula(request, personel_id):
+    personel = get_object_or_404(Personel, id=personel_id)
+    bugun = timezone.now().date()
+    try:
+        yil = int(request.GET.get('yil', bugun.year))
+        ay = int(request.GET.get('ay', bugun.month))
+    except ValueError:
+        yil = bugun.year
+        ay = bugun.month
+
+    # Hesaplamalar (Tek kişi için)
+    calistigi_gun = Puantaj.objects.filter(personel=personel, tarih__year=yil, tarih__month=ay, durum__in=['geldi', 'hafta_tatili']).count()
+    gelmedigi_gun = Puantaj.objects.filter(personel=personel, tarih__year=yil, tarih__month=ay, durum__in=['gelmedi', 'ucretsiz_izin']).count()
+    toplam_mesai = Puantaj.objects.filter(personel=personel, tarih__year=yil, tarih__month=ay).aggregate(Sum('hesaplanan_mesai_saati'))['hesaplanan_mesai_saati__sum'] or 0
+    mesai_ucreti = float(toplam_mesai) * float(personel.ozel_mesai_ucreti)
+
+    if personel.calisma_tipi == 'aylik':
+        gunluk_maliyet = float(personel.maas_tutari) / 30
+        maas_kesintisi = gunluk_maliyet * gelmedigi_gun
+        ana_hakedis = float(personel.maas_tutari) - maas_kesintisi
+    else:
+        ana_hakedis = float(personel.maas_tutari) * calistigi_gun
+
+    # Hareket Detayları (Pusulada listelemek için)
+    tum_hareketler = FinansalHareket.objects.filter(personel=personel, tarih__year=yil, tarih__month=ay).order_by('tarih')
+    
+    primler_listesi = tum_hareketler.filter(islem_tipi='prim')
+    toplam_prim = primler_listesi.aggregate(Sum('tutar'))['tutar__sum'] or 0
+    
+    kesintiler_listesi = tum_hareketler.exclude(islem_tipi='prim')
+    diger_kesintiler = kesintiler_listesi.aggregate(Sum('tutar'))['tutar__sum'] or 0
+    
+    # Taksitler
+    taksitler = TaksitliAvans.objects.filter(personel=personel, tamamlandi=False)
+    taksit_kesintisi = taksitler.aggregate(Sum('aylik_kesinti'))['aylik_kesinti__sum'] or 0
+
+    toplam_kesinti = float(diger_kesintiler) + float(taksit_kesintisi)
+    net_maas = ana_hakedis + mesai_ucreti + float(toplam_prim) - toplam_kesinti
+
+    return render(request, 'core/personel_pusula.html', {
+        'personel': personel,
+        'ay': ay,
+        'yil': yil,
+        'ay_adi': calendar.month_name[ay],
+        'calistigi_gun': calistigi_gun,
+        'gelmedigi_gun': gelmedigi_gun,
+        'ana_hakedis': ana_hakedis,
+        'toplam_mesai': toplam_mesai,
+        'mesai_ucreti': mesai_ucreti,
+        'primler_listesi': primler_listesi,
+        'toplam_prim': toplam_prim,
+        'kesintiler_listesi': kesintiler_listesi,
+        'taksitler': taksitler,
+        'taksit_kesintisi': taksit_kesintisi,
+        'toplam_kesinti': toplam_kesinti,
+        'net_maas': net_maas
+    })
+
+# --- YENİ: AYLIK GİRİŞ-ÇIKIŞ LİSTESİ ---
+def giris_cikis_raporu(request):
+    bugun = timezone.now().date()
+    try:
+        yil = int(request.GET.get('yil', bugun.year))
+        ay = int(request.GET.get('ay', bugun.month))
+    except ValueError:
+        yil = bugun.year
+        ay = bugun.month
+
+    # O ayın tüm puantaj kayıtlarını getir (Önce tarihe, sonra isme göre sırala)
+    kayitlar = Puantaj.objects.filter(
+        tarih__year=yil,
+        tarih__month=ay
+    ).select_related('personel').order_by('tarih', 'personel__ad')
+
+    return render(request, 'core/giris_cikis_raporu.html', {
+        'kayitlar': kayitlar,
+        'yil': yil,
+        'ay': ay,
+        'ay_adi': calendar.month_name[ay]
+    })
+
+def giris_cikis_raporu_indir(request):
+    bugun = timezone.now().date()
+    try:
+        yil = int(request.GET.get('yil', bugun.year))
+        ay = int(request.GET.get('ay', bugun.month))
+    except ValueError:
+        yil = bugun.year
+        ay = bugun.month
+
+    kayitlar = Puantaj.objects.filter(
+        tarih__year=yil,
+        tarih__month=ay
+    ).select_related('personel').order_by('tarih', 'personel__ad')
+    
+    data = []
+    for k in kayitlar:
+        giris = k.giris_saati.strftime('%H:%M') if k.giris_saati else '-'
+        cikis = k.cikis_saati.strftime('%H:%M') if k.cikis_saati else '-'
+        
+        data.append({
+            'Tarih': k.tarih.strftime('%d.%m.%Y'),
+            'Gün': k.tarih.strftime('%A'),
+            'Personel': f"{k.personel.ad} {k.personel.soyad}",
+            'Durum': k.get_durum_display(),
+            'Giriş Saati': giris,
+            'Çıkış Saati': cikis,
+            'Mesai (Saat)': k.hesaplanan_mesai_saati
+        })
+
+    df = pd.DataFrame(data)
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name=f'Giris_Cikis_{ay}_{yil}')
+    
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="Giris_Cikis_Raporu_{ay}_{yil}.xlsx"'
+    return response
