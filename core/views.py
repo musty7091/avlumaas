@@ -448,6 +448,7 @@ def personel_pusula(request, personel_id):
     })
 
 # --- YENİ: AYLIK GİRİŞ-ÇIKIŞ LİSTESİ ---
+# --- GÜNCELLENMİŞ: PERSONEL FİLTRELİ & VARSAYILAN BOŞ RAPOR ---
 def giris_cikis_raporu(request):
     bugun = timezone.now().date()
     try:
@@ -457,17 +458,35 @@ def giris_cikis_raporu(request):
         yil = bugun.year
         ay = bugun.month
 
-    # O ayın tüm puantaj kayıtlarını getir (Önce tarihe, sonra isme göre sırala)
-    kayitlar = Puantaj.objects.filter(
-        tarih__year=yil,
-        tarih__month=ay
-    ).select_related('personel').order_by('tarih', 'personel__ad')
+    # Filtreleme için Personel Listesi
+    personeller = Personel.objects.filter(aktif_mi=True)
+    secilen_personel_id = request.GET.get('personel_id')
+
+    # VARSAYILAN: BOŞ LİSTE (Puantaj.objects.none())
+    # Kullanıcı seçim yapmazsa liste boş gelir.
+    kayitlar = Puantaj.objects.none()
+
+    # Eğer bir personel seçildiyse (ve boş değilse) sorguyu çalıştır
+    if secilen_personel_id:
+        kayitlar = Puantaj.objects.filter(
+            tarih__year=yil,
+            tarih__month=ay,
+            personel_id=secilen_personel_id
+        ).select_related('personel').order_by('tarih')
+        
+        # Template'de 'selected' yapabilmek için ID'yi int'e çeviriyoruz
+        try:
+            secilen_personel_id = int(secilen_personel_id)
+        except ValueError:
+            secilen_personel_id = None
 
     return render(request, 'core/giris_cikis_raporu.html', {
         'kayitlar': kayitlar,
         'yil': yil,
         'ay': ay,
-        'ay_adi': calendar.month_name[ay]
+        'ay_adi': calendar.month_name[ay],
+        'personeller': personeller,
+        'secilen_personel_id': secilen_personel_id
     })
 
 def giris_cikis_raporu_indir(request):
@@ -479,10 +498,17 @@ def giris_cikis_raporu_indir(request):
         yil = bugun.year
         ay = bugun.month
 
-    kayitlar = Puantaj.objects.filter(
-        tarih__year=yil,
-        tarih__month=ay
-    ).select_related('personel').order_by('tarih', 'personel__ad')
+    secilen_personel_id = request.GET.get('personel_id')
+    
+    # Varsayılan boş (Eğer personel seçilmediyse boş Excel döner veya hepsi gelmez)
+    kayitlar = Puantaj.objects.none()
+
+    if secilen_personel_id:
+        kayitlar = Puantaj.objects.filter(
+            tarih__year=yil,
+            tarih__month=ay,
+            personel_id=secilen_personel_id
+        ).select_related('personel').order_by('tarih')
     
     data = []
     for k in kayitlar:
@@ -502,7 +528,8 @@ def giris_cikis_raporu_indir(request):
     df = pd.DataFrame(data)
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name=f'Giris_Cikis_{ay}_{yil}')
+        sheet_name = f'Giris_Cikis_{ay}_{yil}'
+        df.to_excel(writer, index=False, sheet_name=sheet_name)
     
     buffer.seek(0)
     response = HttpResponse(buffer, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
