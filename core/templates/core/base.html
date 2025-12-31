@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avlu Personel Sistemi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        /* Mobil alt menü stili */
+        .mobile-bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            background: white; 
+            border-top: 1px solid #ddd; 
+            z-index: 1000; 
+            padding-bottom: 5px;
+        }
+        .nav-link { 
+            text-align: center; 
+            font-size: 0.75rem; 
+            color: #555; 
+            padding: 8px 0;
+        }
+        .nav-link i, .nav-link div { 
+            display: block; 
+            font-size: 1.4rem; 
+            margin-bottom: 2px;
+        }
+        .nav-link:hover, .nav-link:focus {
+            color: #0d6efd;
+        }
+        .main-content { 
+            padding-bottom: 90px; /* Alt menü altında kalmasın diye boşluk */
+        } 
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-primary sticky-top shadow-sm">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="{% url 'ana_sayfa' %}">
+                🏢 Avlu Personel
+            </a>
+
+            <a href="/admin/" class="btn btn-sm btn-light text-primary fw-bold shadow-sm d-flex align-items-center gap-1">
+                <span>🔒</span> 
+                <span class="d-none d-sm-inline">Yönetici</span> </a>
+        </div>
+    </nav>
+
+    <div class="container mt-3 main-content">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="d-flex justify-content-around mobile-bottom-nav shadow-lg">
+        <a href="{% url 'ana_sayfa' %}" class="nav-link text-decoration-none w-25">
+            <div>🏠</div>
+            <span>Ana Sayfa</span>
+        </a>
+        <a href="{% url 'yoklama_al' %}" class="nav-link text-decoration-none w-25">
+            <div>✅</div>
+            <span>Yoklama</span>
+        </a>
+        <a href="{% url 'maas_raporu' %}" class="nav-link text-decoration-none w-25">
+            <div>💰</div>
+            <span>Maaşlar</span>
+        </a>
+        <a href="{% url 'personel_listesi' %}" class="nav-link text-decoration-none w-25">
+            <div>👥</div>
+            <span>Personel</span>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

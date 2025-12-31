@@ -1,0 +1,38 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h4 class="m-0">Excel'den Personel Yükle</h4>
+                <a href="{% url 'download_excel_template' %}" class="btn btn-light btn-sm fw-bold text-success">
+                    📥 Boş Şablon İndir
+                </a>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Lütfen personellerin olduğu Excel dosyasını seçip yükleyin. <br>
+                    <strong>Zorunlu Başlıklar:</strong> Ad, Soyad, TC No, Telefon, Çalışma Tipi, Maaş, Giriş Tarihi
+                </p>
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Excel Dosyası (.xlsx)</label>
+                        <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">🚀 Yüklemeyi Başlat</button>
+                </form>
+
+                <a href="{% url 'personel_listesi' %}" class="btn btn-link text-muted mt-2">İptal, listeye dön</a>
+            </div>
+        </div>
+        
+        <div class="alert alert-info mt-3">
+            <strong>İpucu:</strong> Sistem TC Kimlik Numarası aynı olan personelleri tekrar eklemez, atlar.
+        </div>
+    </div>
+</div>
+{% endblock %}

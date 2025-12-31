@@ -1,0 +1,119 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <h3 class="fw-bold text-dark">👋 Hoş Geldiniz</h3>
+    <p class="text-muted">İşte bugünün özeti ve hızlı işlemler.</p>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white;">
+            <div class="card-body">
+                <h5 class="card-title opacity-75">Bugün Gelen</h5>
+                <h2 class="fw-bold mb-0">{{ bugun_gelen }}</h2>
+                <small>Kişi çalışıyor</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white;">
+            <div class="card-body">
+                <h5 class="card-title opacity-75">Gelmeyen</h5>
+                <h2 class="fw-bold mb-0">{{ gelmeyen }}</h2>
+                <small>Kişi yok</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white;">
+            <div class="card-body">
+                <h5 class="card-title opacity-75">Personel</h5>
+                <h2 class="fw-bold mb-0">{{ toplam_personel }}</h2>
+                <small>Kayıtlı aktif çalışan</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 col-6">
+        <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%); color: white;">
+            <div class="card-body">
+                <h5 class="card-title opacity-75">Bu Ay Avans</h5>
+                <h3 class="fw-bold mb-0">{{ bu_ay_avans }} ₺</h3>
+                <small>Toplam dağıtılan</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-3">🚀 Hızlı İşlemler</h5>
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <a href="{% url 'yoklama_al' %}" class="btn btn-dark w-100 py-3 shadow-sm d-flex align-items-center justify-content-center">
+            <span class="fs-4 me-2">📝</span> 
+            <span class="fw-bold">Yoklama Al</span>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'maas_raporu' %}" class="btn btn-white bg-white w-100 py-3 shadow-sm border d-flex align-items-center justify-content-center text-dark">
+            <span class="fs-4 me-2">💰</span> 
+            <span class="fw-bold">Maaş Raporu</span>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="{% url 'personel_listesi' %}" class="btn btn-white bg-white w-100 py-3 shadow-sm border d-flex align-items-center justify-content-center text-dark">
+            <span class="fs-4 me-2">👥</span> 
+            <span class="fw-bold">Personel Listesi</span>
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="m-0 fw-bold text-primary">Son Finansal Hareketler (Avans/Prim)</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Personel</th>
+                    <th>İşlem</th>
+                    <th>Tarih</th>
+                    <th class="text-end">Tutar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hareket in son_hareketler %}
+                <tr>
+                    <td class="fw-bold">{{ hareket.personel.ad }} {{ hareket.personel.soyad }}</td>
+                    <td>
+                        {% if hareket.islem_tipi == 'prim' %}
+                            <span class="badge bg-success bg-opacity-10 text-success">Prim (Bonus)</span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger">Kesinti/Avans</span>
+                        {% endif %}
+                        <small class="text-muted d-block" style="font-size: 0.75rem;">{{ hareket.aciklama|default:"" }}</small>
+                    </td>
+                    <td class="text-muted">{{ hareket.tarih|date:"d M Y" }}</td>
+                    <td class="text-end fw-bold">
+                        {% if hareket.islem_tipi == 'prim' %}
+                            <span class="text-success">+{{ hareket.tutar }} ₺</span>
+                        {% else %}
+                            <span class="text-danger">-{{ hareket.tutar }} ₺</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">Henüz finansal işlem yok.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="height: 50px;"></div>
+{% endblock %}

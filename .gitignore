@@ -1,0 +1,13 @@
+# Django genel
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+media/
+
+# Sanal Ortam (Çok Önemli)
+venv/
+env/
+.env

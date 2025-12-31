@@ -1,0 +1,82 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-primary">💰 Maaş Bordrosu</h3>
+    <div class="text-end">
+        <small class="text-muted d-block">Toplam Ödenecek:</small>
+        <span class="h3 fw-bold text-success">{{ genel_toplam }} TL</span>
+    </div>
+</div>
+
+<form method="GET" class="card p-3 mb-4 bg-light shadow-sm">
+    <div class="row g-2 align-items-center">
+        <div class="col-auto"><label class="fw-bold">Dönem Seç:</label></div>
+        <div class="col-auto">
+            <input type="number" name="ay" class="form-control" value="{{ ay }}" min="1" max="12" style="width: 70px;">
+        </div>
+        <div class="col-auto">
+            <input type="number" name="yil" class="form-control" value="{{ yil }}" style="width: 100px;">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Hesapla</button>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle border text-center">
+        <thead class="table-dark">
+            <tr>
+                <th class="text-start">Personel</th>
+                <th>Çalışma</th>
+                <th>Hakediş (Net)</th>
+                <th>Mesai (Saat)</th>
+                <th>Mesai (TL)</th>
+                <th class="text-primary">Primler</th>
+                <th class="text-danger">Kesintiler</th>
+                <th class="bg-success text-white">NET ÖDENECEK</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for satir in rapor_listesi %}
+            <tr>
+                <td class="fw-bold text-start">
+                    {{ satir.personel.ad }} {{ satir.personel.soyad }}
+                    <br>
+                    <small class="text-muted fw-normal">{{ satir.personel.get_calisma_tipi_display }}</small>
+                </td>
+                <td>
+                    <span class="d-block">{{ satir.calistigi_gun }} Gün</span>
+                    {% if satir.gelmedigi_gun > 0 %}
+                        <small class="text-danger">({{ satir.gelmedigi_gun }} gün kesildi)</small>
+                    {% endif %}
+                </td>
+                <td>
+                    {{ satir.ana_hakedis|stringformat:".2f" }} TL
+                </td>
+                <td>
+                    {{ satir.toplam_mesai }} Saat
+                </td>
+                <td>
+                    +{{ satir.mesai_ucreti|stringformat:".2f" }} TL
+                </td>
+                <td class="text-primary fw-bold">
+                    +{{ satir.toplam_prim|stringformat:".2f" }} TL
+                </td>
+                <td class="text-danger fw-bold">
+                    -{{ satir.toplam_kesinti|stringformat:".2f" }} TL
+                </td>
+                <td class="fw-bold fs-5 text-success bg-light">
+                    {{ satir.net_maas|stringformat:".2f" }} TL
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="alert alert-warning mt-3">
+    <small>ℹ️ <strong>Not:</strong> 'Hakediş' sütununda aylık personelin gelmediği günlerin kesintisi yapılmıştır. Primler maaşa eklenir, avanslar düşülür.</small>
+</div>
+{% endblock %}

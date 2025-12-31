@@ -1,0 +1,15 @@
+from django.contrib import admin
+from django.urls import path
+from core import views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', views.ana_sayfa, name='ana_sayfa'),
+    path('personeller/', views.personel_listesi, name='personel_listesi'),
+    path('personel-ekle-excel/', views.personel_import, name='personel_import'),
+    path('sablon-indir/', views.download_excel_template, name='download_excel_template'), # <-- YENİ
+    path('personel/<int:personel_id>/', views.personel_detay, name='personel_detay'),
+    path('yoklama/', views.yoklama_al, name='yoklama_al'),
+    path('personel/<int:personel_id>/toplu-puantaj/', views.toplu_puantaj, name='toplu_puantaj'),
+    path('maas-raporu/', views.maas_raporu, name='maas_raporu'),
+]
