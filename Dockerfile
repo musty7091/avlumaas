@@ -1,7 +1,7 @@
-# 1. Python Sürümü
+# 1. Python Sürümü (Hafif sürüm)
 FROM python:3.10-slim
 
-# 2. Python ayarları (Hızlı log görmek için)
+# 2. Python ayarları (Logları anlık görmek için şart)
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
@@ -16,9 +16,10 @@ RUN pip install -r requirements.txt
 # 5. Proje dosyalarını kopyala
 COPY . /app/
 
-# 6. Port Değişkeni (Google Cloud bunu otomatik verir ama biz tanımlayalım)
+# 6. Port Değişkeni (Google Cloud için)
 ENV PORT 8080
 
-# 7. BAŞLATMA KOMUTU (SİHİRLİ KISIM BURASI)
-# Gunicorn kullanarak başlatır, 0.0.0.0 adresini dinler.
+# 7. BAŞLATMA KOMUTU (SİHİRLİ SATIR BURASI) ⚠️
+# Bu satır olmazsa "Listen" hatası alırsınız.
+# Siteyi 0.0.0.0 adresinden dış dünyaya açar.
 CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 avlu_backend.wsgi:application
